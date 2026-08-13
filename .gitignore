@@ -1,0 +1,64 @@
+# Build
+dist/
+node_modules/
+
+# Environment
+.env
+
+# Node
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Output of tsc, build tools, or linting
+build/
+tmp/
+temp/
+*.tmp
+
+# Others
+*.swp
+*.swo
+*.bak
+*.orig
+*.rej
+
+# MacOS
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DS_Store
+
+# Misc
+*.tgz
+*.gz
+
+# Cursor
+.cursor/
