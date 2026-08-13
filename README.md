@@ -13,11 +13,11 @@ Este es el repositorio del proyecto para aprender sobre patrones de diseño para
 
 ### Levantar proyecto
 
-1. Clonar el .env.template y renombrarlo a .env
+1. Clonar el `.env.template` y renombrarlo a `.env`
 2. Llenar las variables de entorno
 3. Instalar las dependencias `npm install`
 4. Ejecutar el proyecto `npm run dev`
-5. Cambiar el main.ts para ejecutar el patrón que se desee
+5. Cambiar el `main.ts` para ejecutar el patrón que se desee
 
 ## Actualizar dependencias (Opcional)
 
