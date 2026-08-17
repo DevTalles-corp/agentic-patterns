@@ -30,14 +30,14 @@ import { ollama } from 'ollama-ai-provider-v2';
 // export const model = groq('openai/gpt-oss-120b');
 
 // Anthropic:
-// export const model = anthropic('claude-haiku-4-5');
+// export const model = anthropic('claude-fable-5');
 
 // OpenAI:
-// export const model = openai('gpt-5-nano');
+// export const model = openai('gpt-4.1-nano');
 
 // Gemini:
-// export const model = google('gemini-2.5-flash');
+export const model = google('gemini-2.5-flash');
 
 // Ollama:
 // export const model = ollama('gpt-oss:20b');
-export const model = ollama('llama3.2');
+// export const model = ollama('llama3.2');

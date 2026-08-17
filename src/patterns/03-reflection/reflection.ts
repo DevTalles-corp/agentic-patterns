@@ -44,7 +44,7 @@ const REQUIREMENTS = [
   'Especifica la última ubicación conocida',
   'Nombra a sus cómplices',
   'Incluye el monto exacto de la recompensa',
-  'Termina con una línea que empiece por "RIESGO:"',
+  'Termina con una nueva línea que empiece por "RIESGO:" (sin negritas, sin viñetas, sin markdown, sin espacios adelante de la palabra "RIESGO:")  ',
 ];
 
 const TASK =
@@ -124,30 +124,143 @@ async function withoutReflection() {
 // B) REFLEXIÓN INGENUA — el modelo se pregunta "¿está bien?"
 // ---------------------------------------------------------------------------
 
-// TODO: Schema
+const naiveVerdictSchema = z.object({
+  isGoodEnough: z.boolean().describe('¿El texto está listo para entregar?'),
+  comment: z.string().describe('Comentario breve sobre la calidad'),
+});
 
 async function naiveReflection() {
   console.log('\n═══ B) REFLEXIÓN INGENUA (sin criterios) ═══\n'.blue);
   const tracer = createTracer('naive-reflection');
 
   // TODO:
+  const { text: draft } = await generateText({
+    model,
+    prompt: TASK,
+    onStepEnd: tracer.onStepFinish,
+  });
 
-  return { ...tracer.summary() }; // score
+  // La auto-evaluación: Sin rúbrica, sin criterios, sin nada
+  const { output: verdict } = await generateText({
+    model,
+    output: Output.object({
+      schema: naiveVerdictSchema,
+    }),
+    prompt: `TEXTO: \n ${draft}`,
+    onStepEnd: tracer.onStepFinish,
+  });
+
+  console.log('Informe:'.blue);
+  console.log(
+    `Veredicto del modelo: ${
+      verdict.isGoodEnough ? '✅ Está listo' : '⚠️ Necesita cambios'
+    }`
+  );
+  console.log(`   Comentario: ${verdict.comment}`);
+
+  console.log('  REALIDAD: (auditoria programática:'.blue);
+  const score = printAudit(auditBriefing(draft));
+
+  console.log(
+    '\n  ⚠️  Compara el veredicto del modelo con la auditoría.'.yellow +
+      '\n      Esta brecha es la razón de ser de la rúbrica.\n'
+  );
+
+  return { ...tracer.summary(), score }; // score
 }
 
 // ---------------------------------------------------------------------------
 // C) REFLEXIÓN CON RÚBRICA — criterios explícitos e iteración
 // ---------------------------------------------------------------------------
 
-// TODO: Schema crítico
+const criticSchema = z.object({
+  missing: z
+    .array(
+      z.object({
+        requirementNumber: z.number(),
+        evidence: z
+          .string()
+          .describe('Cita LITERAL del texto que lo cumple, o "NINGUNA"'),
+        passed: z.boolean(),
+      })
+    )
+    .describe(
+      'Requisitos NO cumplidos, citando el número de cada uno y la descripción que no cumplió'
+    ),
+  isComplete: z
+    .boolean()
+    .describe('TRUE solo si TODOS los requisitos se cumplen.'),
+});
+
+const MAX_ITERATIONS = 3;
 
 async function reflectionWithRubric() {
   console.log('\n═══ C) REFLEXIÓN CON RÚBRICA ═══\n'.blue);
   const tracer = createTracer('con-rúbrica-reflexión');
 
-  // TODO:
+  let draft = '';
+  let iteration = 0;
 
-  return { ...tracer.summary() }; // score e iteraciones
+  const { text: firstDraft } = await generateText({
+    model,
+    prompt: TASK,
+    onStepEnd: tracer.onStepFinish,
+  });
+
+  draft = firstDraft;
+
+  while (iteration < MAX_ITERATIONS) {
+    iteration++;
+    console.log(`\n --- Iteración ${iteration} --- \n`.blue);
+
+    const { output: critique } = await generateText({
+      model,
+      output: Output.object({ schema: criticSchema }),
+      prompt:
+        `REQUISITOS: \n` +
+        REQUIREMENTS.map((r, i) => `  ${i + 1}. ${r}`).join('\n') +
+        `\n\nTEXTO A REVISAR: \n ${draft}`,
+      instructions:
+        'Eres un revisor estricto. Verifica el texto UNO POR UNO contra ' +
+        'cada requisito de la lista. No asumas que algo está cumplido: ' +
+        'búscalo literalmente en el texto. Es mejor marcar de más que de menos.',
+      onStepEnd: tracer.onStepFinish,
+    });
+
+    if (critique.isComplete) {
+      console.log('   El revisor no encuentra faltantes.'.green);
+      break;
+    }
+
+    console.log('   Faltantes detectados: '.yellow);
+    critique.missing.forEach((item) =>
+      console.log(`       - ${JSON.stringify(item)}`)
+    );
+
+    // Reescribir en caso de problemas encontrados
+    const { text: revised } = await generateText({
+      model,
+      instructions:
+        'Reescribe el briefing corrigiendo ÚNICAMENTE los puntos señalados. ' +
+        'Conserva lo que ya funcionaba. Respeta el límite de 120 palabras.',
+      prompt:
+        `BRIEFING ACTUAL:\n${draft}\n\n` +
+        `CORRIGE ESTOS PUNTOS:\n${critique.missing
+          .map((m) => `  - ${JSON.stringify(m)}`)
+          .join('\n')}\n\n` +
+        `CONTEXTO:\n${VILLAIN_DOSSIER}`,
+      onStepEnd: tracer.onStepFinish,
+    });
+
+    draft = revised;
+  }
+
+  console.log(`\n Versión final (tras ${iteration} iteraciones): `.blue);
+  console.log(draft.green);
+  console.log('\n Auditoría: '.blue);
+  const score = printAudit(auditBriefing(draft));
+
+  return { ...tracer.summary(), score, iterations: iteration }; // score e iteraciones
 }
 
 // ---------------------------------------------------------------------------
@@ -156,14 +269,14 @@ async function reflectionWithRubric() {
 
 export async function reflectionMain() {
   const a = await withoutReflection();
-  //   const b = await naiveReflection();
-  //   const c = await reflectionWithRubric();
+  const b = await naiveReflection();
+  const c = await reflectionWithRubric();
 
   console.log('\n═══ COMPARATIVA ═══\n'.blue);
   console.table({
     'Sin reflexión': a,
-    //     'Reflexión ingenua': b,
-    //     'Reflexión con rúbrica': c,
+    'Reflexión ingenua': b,
+    'Reflexión con rúbrica': c,
   });
 
   console.log(
