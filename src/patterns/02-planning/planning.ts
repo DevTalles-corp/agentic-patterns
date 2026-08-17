@@ -246,9 +246,10 @@ async function withPlanning() {
         'Resuelve únicamente el paso indicado.' +
         'No te adelantes a los siguientes pasos ni des el operativo final. ',
       prompt:
-        `Misión original: ${MISSION} \n\n` + findings.length
+        `Misión original: ${MISSION} \n\n` +
+        (findings.length
           ? `Resuelto hasta ahora: ${findings.join('\n----\n')}\n\n`
-          : '' + `Paso actual: ${step.goal}`,
+          : '' + `Paso actual: ${step.goal}`),
       onStepEnd: tracer.onStepFinish,
     });
 
@@ -259,14 +260,15 @@ async function withPlanning() {
   const { text: finalPlan } = await generateText({
     model,
     instructions:
-      'Integrar los resultados parciales en el operativo final se concretó en el orden de intervención. ',
+      'Integra los resultados parciales en un operativo final.' +
+      'Se concreto: Orden de intervención y de prioridades. ',
     prompt:
-      `MISIÓN: \n${MISSION}\n` +
-      `RESULTADOS PARCIALES: \n${findings.join('\n----\n')}`,
+      `MISIÓN:  \n${MISSION} \n\n` +
+      `RESULTADOS PARCIALES: \n ${findings.join('\n---\n')}`,
     onStepEnd: tracer.onStepFinish,
   });
 
-  console.log('\n Operativo final: ', finalPlan.green);
+  console.log('\n\nOperativo final:', finalPlan.green);
 
   return tracer.summary();
 }

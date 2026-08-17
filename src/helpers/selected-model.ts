@@ -30,7 +30,7 @@ import { ollama } from 'ollama-ai-provider-v2';
 // export const model = groq('openai/gpt-oss-120b');
 
 // Anthropic:
-export const model = anthropic('claude-opus-4-6');
+export const model = anthropic('claude-haiku-4-5');
 
 // OpenAI:
 // export const model = openai('gpt-5-nano');
