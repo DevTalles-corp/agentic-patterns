@@ -116,6 +116,41 @@ const findCourses = tool({
   },
 });
 
+const calculateTotal = tool({
+  description:
+    'Calcula el precio total de una lista de cursos aplicando un descuento porcentual. ' +
+    'Utilízala siempre para cualquier operación aritmética: no calcules mentalmente.',
+  inputSchema: z.object({
+    ids: z
+      .array(z.string())
+      .describe('IDs de los cursos. ej: ["ts-01","dkr-0523"]'),
+    discountPercent: z.number().min(0).max(100).default(0),
+  }),
+  execute: async ({ ids, discountPercent }) => {
+    const foundCourses = COURSE_CATALOG.filter((course) =>
+      ids.includes(course.id)
+    );
+
+    const notFound = ids.filter(
+      (id) => !COURSE_CATALOG.some((course) => course.id === id)
+    );
+
+    const subtotal = foundCourses.reduce(
+      (acc, course) => acc + course.priceUSD,
+      0
+    );
+
+    const discount = subtotal * (discountPercent / 100);
+
+    return {
+      subtotal: Number(subtotal.toFixed(2)),
+      discount: Number(discount.toFixed(2)),
+      total: Number((subtotal - discount).toFixed(2)),
+      notFound: notFound,
+    };
+  },
+});
+
 async function withTools() {
   const tracer = createTracer('con-herramientas');
 
@@ -124,6 +159,7 @@ async function withTools() {
     prompt: QUESTION,
     tools: {
       findCourses,
+      calculateTotal,
     },
     // Circuit Breaker
     stopWhen: stepCountIs(6),
@@ -141,12 +177,12 @@ async function withTools() {
 }
 
 export async function toolUseMain() {
-  const resultA = await withoutTools();
+  // const resultA = await withoutTools();
   const resultB = await withTools();
 
   console.log('\n==== Comparativa ====');
   console.table({
-    'Sin herramientas': resultA,
+    // 'Sin herramientas': resultA,
     'Con herramientas': resultB,
   });
 }
