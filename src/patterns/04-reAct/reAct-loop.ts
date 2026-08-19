@@ -71,13 +71,20 @@ const EMPLOYEES: Employee[] = [
     approvalLimitUSD: 100_000,
     managerId: 'EMP-6',
   },
-  // {
-  //   id: 'EMP-6',
-  //   name: 'María López',
-  //   role: 'CEO',
-  //   approvalLimitUSD: 1_000_000,
-  //   managerId: null,
-  // },
+  {
+    id: 'EMP-6',
+    name: 'María López',
+    role: 'CEO',
+    approvalLimitUSD: 1_000_000,
+    managerId: 'EMP-7',
+  },
+  {
+    id: 'EMP-7',
+    name: 'Juan Peña',
+    role: 'CEO - Founder',
+    approvalLimitUSD: 2_000_000,
+    managerId: null,
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -102,8 +109,8 @@ const getEmployee = tool({
 // EL PROBLEMA
 // ---------------------------------------------------------------------------
 
-const AMOUNT_USD = 8_500;
-// const AMOUNT_USD = 900_000;
+// const AMOUNT_USD = 8_500;
+const AMOUNT_USD = 1_900_000;
 
 const REQUEST =
   `Ana Ruiz (EMP-1) necesita aprobación para un gasto de ` +
@@ -164,7 +171,31 @@ async function withReAct() {
   console.log('\n═══ B) CON ReAct — bucle adaptativo ═══\n'.blue);
   const tracer = createTracer('con-reAct');
 
-  // TODO:
+  const anaRecord = EMPLOYEES.find((e) => e.id === 'EMP-1')!;
+
+  const { text } = await generateText({
+    model,
+    tools: { getEmployee },
+    // Circuit breaker.
+    stopWhen: stepCountIs(10),
+    instructions:
+      'Eres un asistente de finanzas. Trabaja en ciclos: consulta una ' +
+      'ficha, compara el límite con el importe y decide si necesitas ' +
+      'subir un nivel más.\n' +
+      'CONDICIÓN DE CIERRE: solo has terminado cuando encuentres a alguien ' +
+      'cuyo límite CUBRA el importe. Si no lo cubre, sube al jefe.\n' +
+      'Si llegas a alguien sin jefe (managerId null) y aún no alcanza, ' +
+      'detente y di que el gasto no es aprobable internamente.\n' +
+      'No inventes IDs: sácalos del campo managerId del resultado anterior.\n' +
+      'Tu último mensaje debe ser la respuesta final, no un razonamiento ' +
+      'suelto. Cita el nombre, el cargo y el límite. Responde en español.',
+    prompt:
+      `${REQUEST}\n\n` +
+      `DATO DISPONIBLE: ${JSON.stringify(anaRecord, null, 2)}`,
+    onStepEnd: tracer.onStepFinish,
+  });
+
+  console.log('\nRespuesta: \n'.blue, text.green);
 
   console.log(
     (
