@@ -282,36 +282,36 @@ function auditReport(text: string) {
 // ---------------------------------------------------------------------------
 
 export async function planAndExecuteMain() {
-  console.log('\n##### TAREA PREDECIBLE #####'.blue);
-  const a = await withReAct(PREDICTABLE_TASK);
-  const b = await withPlanAndExecute(PREDICTABLE_TASK);
+  // console.log('\n##### TAREA PREDECIBLE #####'.blue);
+  // const a = await withReAct(PREDICTABLE_TASK);
+  // const b = await withPlanAndExecute(PREDICTABLE_TASK);
 
-  // console.log('\n##### TAREA ADAPTATIVA #####'.blue);
-  // const c = await withReAct(ADAPTIVE_TASK);
-  // console.log('\n Auditoría ReAct:'.blue);
-  // const scoreC = auditReport(c.text);
+  console.log('\n##### TAREA ADAPTATIVA #####'.blue);
+  const c = await withReAct(ADAPTIVE_TASK);
+  console.log('\n Auditoría ReAct:'.blue);
+  const scoreC = auditReport(c.text);
 
-  // const d = await withPlanAndExecute(ADAPTIVE_TASK);
-  // console.log('\n Auditoría Plan-and-Execute:'.blue);
-  // const scoreD = auditReport(d.text);
+  const d = await withPlanAndExecute(ADAPTIVE_TASK);
+  console.log('\n Auditoría Plan-and-Execute:'.blue);
+  const scoreD = auditReport(d.text);
 
   console.log('\n═══ COMPARATIVA ═══\n'.blue);
   console.table({
-    'ReAct (predecible)': { steps: a.steps, totalTokens: a.totalTokens },
-    'Plan-and-Execute (predecible)': {
-      steps: b.steps,
-      totalTokens: b.totalTokens,
+    // 'ReAct (predecible)': { steps: a.steps, totalTokens: a.totalTokens },
+    // 'Plan-and-Execute (predecible)': {
+    //   steps: b.steps,
+    //   totalTokens: b.totalTokens,
+    // },
+    'ReAct (adaptativa)': {
+      steps: c.steps,
+      totalTokens: c.totalTokens,
+      score: scoreC,
     },
-    // 'ReAct (adaptativa)': {
-    //   steps: c.steps,
-    //   totalTokens: c.totalTokens,
-    //   score: scoreC,
-    // },
-    // 'Plan-and-Execute (adaptativa)': {
-    //   steps: d.steps,
-    //   totalTokens: d.totalTokens,
-    //   score: scoreD,
-    // },
+    'Plan-and-Execute (adaptativa)': {
+      steps: d.steps,
+      totalTokens: d.totalTokens,
+      score: scoreD,
+    },
   });
 
   console.log(
